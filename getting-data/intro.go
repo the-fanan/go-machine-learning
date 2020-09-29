@@ -9,7 +9,11 @@ import (
 	"io"
 	"io/ioutil"
 	"strconv"
+	"time"
+	"log"
 	"github.com/kniren/gota/dataframe"
+	"github.com/patrickmn/go-cache"
+	"github.com/boltdb/bolt"
 )
 
 /**
@@ -162,6 +166,51 @@ func JSONProcessing(){
 	}
 }
 
+func InMemoryCache() {
+	c := cache.New(5*time.Minute, 30*time.Second)
+	// Put a key and value into the cache.
+	c.Set("tut-key", "go tutorial", cache.DefaultExpiration)
+	v, found := c.Get("tut-key")
+	if found {
+		fmt.Printf("key: tut-key, value: %s\n", v)
+	}
+}
+
+func DiskCache() {
+	db, err := bolt.Open("data/tutorial.db", 0600, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	// Create a "bucket" in the boltdb file for our data.
+	if err := db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucket([]byte("MyBucket"))
+		if err != nil {
+			return fmt.Errorf("create bucket: %s", err)
+		}
+		return nil
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	// Output the keys and values in the embedded
+	// BoltDB file to standard out.
+	if err := db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("MyBucket"))
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			fmt.Printf("key: %s, value: %s\n", k, v)
+		}
+		return nil
+		}); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 	JSONProcessing()
+	CSVManipulation()
+	CSVReadPerLine()
+	InMemoryCache()
+	DiskCache()
 }
