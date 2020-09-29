@@ -193,7 +193,7 @@ func DiskCache() {
 		log.Fatal(err)
 	}
 
-	// Output the keys and values in the embedded
+	// Output the keys and values in the tutorial db
 	// BoltDB file to standard out.
 	if err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("MyBucket"))
@@ -205,6 +205,10 @@ func DiskCache() {
 		}); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func DataVersioning(){
+	
 }
 
 func main() {
